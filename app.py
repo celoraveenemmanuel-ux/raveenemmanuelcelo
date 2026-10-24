@@ -11,10 +11,10 @@ def home():
 @app.route('/student')
 def get_student():
     return jsonify({
-        "student_id": "2026-00123",
-        "name": "Juan Dela Cruz",
+        "student_id": "24-00194",
+        "name": "Raveen Emmanuel Celo",
         "program": "BSIT",
-        "year": 1,
+        "year": 3,
         "section": "A"
     })
 
