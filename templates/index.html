@@ -98,24 +98,32 @@
         }
 
         #result,
-        #motorcycleResult {
+        #motorcycleResult,
+        #studentList {
             margin-top: 22px;
             display: grid;
             gap: 10px;
         }
 
         .info-item,
-        .motorcycle-item {
+        .motorcycle-item,
+        .database-item {
             background: #f3faf4;
             border: 1px solid #d6e9d9;
             border-radius: 8px;
             padding: 13px 15px;
-            line-height: 1.5;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
         }
 
         .info-item b,
-        .motorcycle-item b {
+        .motorcycle-item b,
+        .database-item b {
             color: #245b35;
+        }
+
+        .database-item p {
+            margin: 5px 0 0;
         }
 
         #greeting {
@@ -172,7 +180,7 @@
             <h1>Student API Interface</h1>
             <p>
                 Retrieve student information, try the Greeting API,
-                and explore your custom Motorcycle API.
+                explore motorcycle details, and view database records.
             </p>
         </header>
 
@@ -210,7 +218,7 @@
             <p id="greeting" class="hidden" aria-live="polite"></p>
         </section>
 
-        <!-- Custom Motorcycle API -->
+        <!-- Motorcycle API -->
         <section class="card">
             <h2>Motorcycle Information</h2>
             <p class="description">
@@ -225,8 +233,21 @@
             <div id="motorcycleResult" aria-live="polite"></div>
         </section>
 
+        <!-- Students from Database -->
+        <section class="card">
+            <h2>Students from Database</h2>
+            <p class="description">
+                Retrieve all student records stored in your SQLite database.
+            </p>
+
+            <button onclick="loadStudents()">Load Students</button>
+
+            <p id="databaseStatus" class="status" aria-live="polite"></p>
+            <div id="studentList" aria-live="polite"></div>
+        </section>
+
         <footer>
-            Student API Interface &bull; Powered by Flask
+            Student API Interface &bull; Powered by Flask and SQLite
         </footer>
 
     </div>
@@ -274,9 +295,11 @@
                     result.appendChild(item);
                 });
 
-                status.textContent = 'Student information loaded successfully.';
+                status.textContent =
+                    'Student information loaded successfully.';
             } catch (error) {
-                status.textContent = 'Unable to retrieve student information.';
+                status.textContent =
+                    'Unable to retrieve student information.';
                 console.error(error);
             }
         }
@@ -306,13 +329,16 @@
             }
         }
 
-        document.getElementById('nameInput').addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-                sayHello();
+        document.getElementById('nameInput').addEventListener(
+            'keydown',
+            event => {
+                if (event.key === 'Enter') {
+                    sayHello();
+                }
             }
-        });
+        );
 
-        // Custom Motorcycle API
+        // Motorcycle API
         async function loadMotorcycle() {
             const result = document.getElementById('motorcycleResult');
             const status = document.getElementById('motorcycleStatus');
@@ -359,10 +385,70 @@
                     result.appendChild(item);
                 });
 
-                status.textContent = 'Motorcycle information loaded successfully.';
+                status.textContent =
+                    'Motorcycle information loaded successfully.';
             } catch (error) {
-                status.textContent = 'Unable to retrieve motorcycle information.';
+                status.textContent =
+                    'Unable to retrieve motorcycle information.';
                 console.error(error);
+            }
+        }
+
+        // Students from SQLite Database
+        async function loadStudents() {
+            const studentList = document.getElementById('studentList');
+            const status = document.getElementById('databaseStatus');
+
+            status.textContent = 'Loading student records...';
+            studentList.replaceChildren();
+
+            try {
+                const response = await fetch('/students');
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid student data received.');
+                }
+
+                if (data.length === 0) {
+                    status.textContent = 'No student records found.';
+                    return;
+                }
+
+                data.forEach(student => {
+                    const item = document.createElement('div');
+                    item.className = 'database-item';
+
+                    const title = document.createElement('b');
+                    title.textContent =
+                        student.student_id || 'No student ID';
+
+                    const details = document.createElement('p');
+                    details.textContent =
+                        (student.name || 'Unknown name') + ' | ' +
+                        (student.program || 'N/A') + ' | Year ' +
+                        (student.year ?? 'N/A') + ' | Section ' +
+                        (student.section || 'N/A');
+
+                    item.appendChild(title);
+                    item.appendChild(document.createElement('br'));
+                    item.appendChild(details);
+
+                    studentList.appendChild(item);
+                });
+
+                status.textContent =
+                    'Successfully loaded ' + data.length +
+                    ' student record(s).';
+            } catch (error) {
+                status.textContent =
+                    'Unable to retrieve student records.';
+                console.error('Database API error:', error);
             }
         }
     </script>
