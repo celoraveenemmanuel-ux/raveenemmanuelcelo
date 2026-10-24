@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student API Interface</title>
+
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #e8f5e9, #f4fbf5);
+        color: #1b3324;
+        margin: 0;
+        padding: 40px 20px;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 750px;
+        margin: 0 auto;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    header h1 {
+        color: #15803d;
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    header p {
+        color: #647568;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .card {
+        background: #ffffff;
+        padding: 28px;
+        margin-bottom: 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(22, 101, 52, 0.09);
+        border: 1px solid #d6e9d9;
+    }
+
+    .card h2 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #166534;
+        font-size: 22px;
+    }
+
+    .description {
+        color: #647568;
+        font-size: 14px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    button {
+        background: #16a34a;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 18px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    button:hover {
+        background: #15803d;
+        transform: translateY(-1px);
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    input {
+        width: 100%;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        border: 1px solid #bbd8c1;
+        border-radius: 8px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+        border-color: #16a34a;
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
+    }
+
+    #result {
+        margin-top: 22px;
+        display: grid;
+        gap: 10px;
+    }
+
+    .info-item {
+        background: #f3faf4;
+        border: 1px solid #d6e9d9;
+        border-radius: 8px;
+        padding: 13px 15px;
+        line-height: 1.5;
+    }
+
+    .info-item b {
+        color: #245b35;
+    }
+
+    #greeting {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 8px;
+        background: #dcfce7;
+        color: #166534;
+        font-weight: bold;
+        overflow-wrap: anywhere;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .status {
+        color: #647568;
+        font-size: 14px;
+        margin-top: 14px;
+    }
+
+    footer {
+        text-align: center;
+        color: #718576;
+        font-size: 13px;
+        margin-top: 30px;
+    }
+
+    @media (max-width: 500px) {
+        body {
+            padding: 24px 14px;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        .card {
+            padding: 20px;
+        }
+
+        button {
+            width: 100%;
+        }
+    }
+</style>
+
+</head>
+
+<body>
+    <div class="container">
+
+        <header>
+            <h1>Student API Interface</h1>
+            <p>
+                Welcome! Retrieve student information and test the
+                greeting API using your Flask application.
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>Student Information</h2>
+            <p class="description">
+                Click the button below to retrieve student details
+                from the Flask API.
+            </p>
+
+            <button onclick="loadStudent()">
+                Load Student Information
+            </button>
+
+            <p id="studentStatus" class="status" aria-live="polite"></p>
+            <div id="result" aria-live="polite"></div>
+        </section>
+
+        <section class="card">
+            <h2>Greeting API</h2>
+            <p class="description">
+                Enter your first name to receive a personalized greeting.
+            </p>
+
+            <input
+                type="text"
+                id="nameInput"
+                placeholder="Enter your first name"
+                aria-label="Your first name"
+            >
+
+            <button onclick="sayHello()">Say Hello</button>
+
+            <p id="greeting" class="hidden" aria-live="polite"></p>
+        </section>
+
+        <footer>
+            Student API Interface &bull; Powered by Flask
+        </footer>
+
+    </div>
+
+    <script>
+        async function loadStudent() {
+            const result = document.getElementById('result');
+            const status = document.getElementById('studentStatus');
+
+            status.textContent = 'Loading student information...';
+            result.replaceChildren();
+
+            try {
+                const response = await fetch('/student');
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+
+                const fields = [
+                    ['Student ID', data.student_id],
+                    ['Name', data.name],
+                    ['Program', data.program],
+                    ['Year', data.year],
+                    ['Section', data.section]
+                ];
+
+                fields.forEach(([label, value]) => {
+                    const item = document.createElement('div');
+                    item.className = 'info-item';
+
+                    const bold = document.createElement('b');
+                    bold.textContent = label + ': ';
+
+                    item.appendChild(bold);
+                    item.appendChild(
+                        document.createTextNode(
+                            value == null ? '' : String(value)
+                        )
+                    );
+
+                    result.appendChild(item);
+                });
+
+                status.textContent = 'Student information loaded successfully.';
+            } catch (error) {
+                status.textContent = 'Unable to retrieve student information.';
+                console.error(error);
+            }
+        }
+
+        async function sayHello() {
+            const name = document.getElementById('nameInput').value.trim();
+            const greeting = document.getElementById('greeting');
+
+            greeting.classList.remove('hidden');
+            greeting.textContent = 'Loading greeting...';
+
+            try {
+                const response = await fetch(
+                    '/hello?name=' + encodeURIComponent(name || 'Student')
+                );
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+                greeting.textContent = data.message;
+            } catch (error) {
+                greeting.textContent = 'Unable to retrieve greeting.';
+                console.error(error);
+            }
+        }
+
+        document.getElementById('nameInput').addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                sayHello();
+            }
+        });
+    </script>
+</body>
+</html>
