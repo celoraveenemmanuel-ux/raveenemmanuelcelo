@@ -1,3 +1,4 @@
+
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -25,6 +26,8 @@ def say_hello():
     return jsonify({
         "message": f"Hello, {name}!"
     })
+
+
 @app.route('/motorcycle')
 def get_motorcycle():
     return jsonify({
@@ -34,6 +37,7 @@ def get_motorcycle():
         "price": 79900,
         "available": True
     })
+
 
 @app.route('/area')
 def calculate_area():
@@ -50,6 +54,7 @@ def calculate_area():
         "width": width,
         "area": length * width
     })
+
 
 if __name__ == '__main__':
     app.run(debug=True)
