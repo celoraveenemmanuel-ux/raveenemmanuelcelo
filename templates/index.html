@@ -7,9 +7,7 @@
     <title>Student API Interface</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             font-family: Arial, sans-serif;
@@ -43,7 +41,7 @@
         }
 
         .card {
-            background: #ffffff;
+            background: #fff;
             padding: 28px;
             margin-bottom: 24px;
             border-radius: 16px;
@@ -67,7 +65,7 @@
 
         button {
             background: #16a34a;
-            color: #ffffff;
+            color: #fff;
             border: none;
             border-radius: 8px;
             padding: 12px 18px;
@@ -99,7 +97,8 @@
 
         #result,
         #motorcycleResult,
-        #studentList {
+        #studentList,
+        #yearStudentList {
             margin-top: 22px;
             display: grid;
             gap: 10px;
@@ -136,14 +135,13 @@
             overflow-wrap: anywhere;
         }
 
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
 
         .status {
             color: #647568;
             font-size: 14px;
             margin-top: 14px;
+            line-height: 1.5;
         }
 
         footer {
@@ -154,303 +152,349 @@
         }
 
         @media (max-width: 500px) {
-            body {
-                padding: 24px 14px;
-            }
-
-            header h1 {
-                font-size: 26px;
-            }
-
-            .card {
-                padding: 20px;
-            }
-
-            button {
-                width: 100%;
-            }
+            body { padding: 24px 14px; }
+            header h1 { font-size: 26px; }
+            .card { padding: 20px; }
+            button { width: 100%; }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
+<div class="container">
 
-        <header>
-            <h1>Student API Interface</h1>
-            <p>
-                Retrieve student information, try the Greeting API,
-                explore motorcycle details, and view database records.
-            </p>
-        </header>
+    <header>
+        <h1>Student API Interface</h1>
+        <p>
+            Retrieve student information, try the Greeting API,
+            explore motorcycle details, and view database records.
+        </p>
+    </header>
 
-        <!-- Student Information -->
-        <section class="card">
-            <h2>Student Information</h2>
-            <p class="description">
-                Retrieve student details from the Flask API.
-            </p>
+    <!-- Student Information -->
+    <section class="card">
+        <h2>Student Information</h2>
+        <p class="description">
+            Retrieve student details from the Flask API.
+        </p>
+        <button onclick="loadStudent()">Load Student Information</button>
+        <p id="studentStatus" class="status" aria-live="polite"></p>
+        <div id="result" aria-live="polite"></div>
+    </section>
 
-            <button onclick="loadStudent()">
-                Load Student Information
-            </button>
+    <!-- Greeting API -->
+    <section class="card">
+        <h2>Greeting API</h2>
+        <p class="description">
+            Enter your first name to receive a personalized greeting.
+        </p>
+        <input
+            type="text"
+            id="nameInput"
+            placeholder="Enter your first name"
+            aria-label="Your first name"
+        >
+        <button onclick="sayHello()">Say Hello</button>
+        <p id="greeting" class="hidden" aria-live="polite"></p>
+    </section>
 
-            <p id="studentStatus" class="status" aria-live="polite"></p>
-            <div id="result" aria-live="polite"></div>
-        </section>
+    <!-- Motorcycle API -->
+    <section class="card">
+        <h2>Motorcycle Information</h2>
+        <p class="description">
+            Retrieve motorcycle details from your custom API endpoint.
+        </p>
+        <button onclick="loadMotorcycle()">Load Motorcycle Information</button>
+        <p id="motorcycleStatus" class="status" aria-live="polite"></p>
+        <div id="motorcycleResult" aria-live="polite"></div>
+    </section>
 
-        <!-- Greeting API -->
-        <section class="card">
-            <h2>Greeting API</h2>
-            <p class="description">
-                Enter your first name to receive a personalized greeting.
-            </p>
+    <!-- All Students from Database -->
+    <section class="card">
+        <h2>Students from Database</h2>
+        <p class="description">
+            Retrieve all student records stored in your SQLite database.
+        </p>
+        <button onclick="loadStudents()">Load Students</button>
+        <p id="databaseStatus" class="status" aria-live="polite"></p>
+        <div id="studentList" aria-live="polite"></div>
+    </section>
 
-            <input
-                type="text"
-                id="nameInput"
-                placeholder="Enter your first name"
-                aria-label="Your first name"
-            >
+    <!-- Additional API: Students by Year Level -->
+    <section class="card">
+        <h2>Students by Year Level</h2>
+        <p class="description">
+            Search for students belonging to a specific year level.
+            Results are retrieved from students.db.
+        </p>
 
-            <button onclick="sayHello()">Say Hello</button>
+        <input
+            type="number"
+            id="yearInput"
+            placeholder="Enter year level (e.g. 1, 2, 3, 4)"
+            min="1"
+            step="1"
+            aria-label="Year level"
+        >
 
-            <p id="greeting" class="hidden" aria-live="polite"></p>
-        </section>
+        <button onclick="loadStudentsByYear()">
+            Search Students by Year
+        </button>
 
-        <!-- Motorcycle API -->
-        <section class="card">
-            <h2>Motorcycle Information</h2>
-            <p class="description">
-                Retrieve motorcycle details from your custom API endpoint.
-            </p>
+        <p id="yearStatus" class="status" aria-live="polite"></p>
+        <div id="yearStudentList" aria-live="polite"></div>
+    </section>
 
-            <button onclick="loadMotorcycle()">
-                Load Motorcycle Information
-            </button>
+    <footer>
+        Student API Interface &bull; Powered by Flask and SQLite
+    </footer>
 
-            <p id="motorcycleStatus" class="status" aria-live="polite"></p>
-            <div id="motorcycleResult" aria-live="polite"></div>
-        </section>
+</div>
 
-        <!-- Students from Database -->
-        <section class="card">
-            <h2>Students from Database</h2>
-            <p class="description">
-                Retrieve all student records stored in your SQLite database.
-            </p>
+<script>
+    // Student API
+    async function loadStudent() {
+        const result = document.getElementById('result');
+        const status = document.getElementById('studentStatus');
 
-            <button onclick="loadStudents()">Load Students</button>
+        status.textContent = 'Loading student information...';
+        result.replaceChildren();
 
-            <p id="databaseStatus" class="status" aria-live="polite"></p>
-            <div id="studentList" aria-live="polite"></div>
-        </section>
+        try {
+            const response = await fetch('/student');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
 
-        <footer>
-            Student API Interface &bull; Powered by Flask and SQLite
-        </footer>
+            const data = await response.json();
 
-    </div>
+            const fields = [
+                ['Student ID', data.student_id],
+                ['Name', data.name],
+                ['Program', data.program],
+                ['Year', data.year],
+                ['Section', data.section]
+            ];
 
-    <script>
-        // Student API
-        async function loadStudent() {
-            const result = document.getElementById('result');
-            const status = document.getElementById('studentStatus');
+            fields.forEach(([label, value]) => {
+                const item = document.createElement('div');
+                item.className = 'info-item';
 
-            status.textContent = 'Loading student information...';
-            result.replaceChildren();
+                const bold = document.createElement('b');
+                bold.textContent = label + ': ';
 
-            try {
-                const response = await fetch('/student');
+                item.appendChild(bold);
+                item.appendChild(document.createTextNode(
+                    value == null ? '' : String(value)
+                ));
+                result.appendChild(item);
+            });
 
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
+            status.textContent = 'Student information loaded successfully.';
+        } catch (error) {
+            status.textContent = 'Unable to retrieve student information.';
+            console.error(error);
+        }
+    }
 
-                const data = await response.json();
+    // Greeting API
+    async function sayHello() {
+        const name = document.getElementById('nameInput').value.trim();
+        const greeting = document.getElementById('greeting');
 
-                const fields = [
-                    ['Student ID', data.student_id],
-                    ['Name', data.name],
-                    ['Program', data.program],
-                    ['Year', data.year],
-                    ['Section', data.section]
-                ];
+        greeting.classList.remove('hidden');
+        greeting.textContent = 'Loading greeting...';
 
-                fields.forEach(([label, value]) => {
-                    const item = document.createElement('div');
-                    item.className = 'info-item';
+        try {
+            const response = await fetch(
+                '/hello?name=' + encodeURIComponent(name || 'Student')
+            );
+            if (!response.ok) throw new Error('HTTP ' + response.status);
 
-                    const bold = document.createElement('b');
-                    bold.textContent = label + ': ';
+            const data = await response.json();
+            greeting.textContent = data.message;
+        } catch (error) {
+            greeting.textContent = 'Unable to retrieve greeting.';
+            console.error(error);
+        }
+    }
 
-                    item.appendChild(bold);
-                    item.appendChild(
-                        document.createTextNode(
-                            value == null ? '' : String(value)
-                        )
-                    );
+    document.getElementById('nameInput').addEventListener('keydown', event => {
+        if (event.key === 'Enter') sayHello();
+    });
 
-                    result.appendChild(item);
-                });
+    // Motorcycle API
+    async function loadMotorcycle() {
+        const result = document.getElementById('motorcycleResult');
+        const status = document.getElementById('motorcycleStatus');
 
-                status.textContent =
-                    'Student information loaded successfully.';
-            } catch (error) {
-                status.textContent =
-                    'Unable to retrieve student information.';
-                console.error(error);
+        status.textContent = 'Loading motorcycle information...';
+        result.replaceChildren();
+
+        try {
+            const response = await fetch('/motorcycle');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+
+            const data = await response.json();
+
+            const fields = [
+                ['Motorcycle Name', data.motorcycle_name],
+                ['Brand', data.brand],
+                ['Engine CC', data.engine_cc],
+                [
+                    'Price',
+                    data.price == null
+                        ? ''
+                        : '₱' + Number(data.price).toLocaleString('en-PH')
+                ],
+                ['Available', data.available ? 'Yes' : 'No']
+            ];
+
+            fields.forEach(([label, value]) => {
+                const item = document.createElement('div');
+                item.className = 'motorcycle-item';
+
+                const bold = document.createElement('b');
+                bold.textContent = label + ': ';
+
+                item.appendChild(bold);
+                item.appendChild(document.createTextNode(
+                    value == null ? '' : String(value)
+                ));
+                result.appendChild(item);
+            });
+
+            status.textContent = 'Motorcycle information loaded successfully.';
+        } catch (error) {
+            status.textContent = 'Unable to retrieve motorcycle information.';
+            console.error(error);
+        }
+    }
+
+    // All Students from SQLite Database
+    async function loadStudents() {
+        const studentList = document.getElementById('studentList');
+        const status = document.getElementById('databaseStatus');
+
+        status.textContent = 'Loading student records...';
+        studentList.replaceChildren();
+
+        try {
+            const response = await fetch('/students');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid student data received.');
             }
+
+            if (data.length === 0) {
+                status.textContent = 'No student records found.';
+                return;
+            }
+
+            data.forEach(student => {
+                const item = document.createElement('div');
+                item.className = 'database-item';
+
+                const title = document.createElement('b');
+                title.textContent =
+                    'Student ID: ' + (student.student_id ?? 'N/A');
+
+                const details = document.createElement('p');
+                details.textContent =
+                    (student.name ?? 'Unknown name') + ' | ' +
+                    (student.program ?? 'N/A') + ' | Year ' +
+                    (student.year ?? 'N/A') + ' | Section ' +
+                    (student.section ?? 'N/A');
+
+                item.appendChild(title);
+                item.appendChild(document.createElement('br'));
+                item.appendChild(details);
+                studentList.appendChild(item);
+            });
+
+            status.textContent =
+                'Successfully loaded ' + data.length + ' student record(s).';
+        } catch (error) {
+            status.textContent = 'Unable to retrieve student records.';
+            console.error('Database API error:', error);
+        }
+    }
+
+    // Additional API: Students by Year Level
+    async function loadStudentsByYear() {
+        const year = document.getElementById('yearInput').value.trim();
+        const studentList = document.getElementById('yearStudentList');
+        const status = document.getElementById('yearStatus');
+
+        studentList.replaceChildren();
+
+        if (
+            year === '' ||
+            !Number.isInteger(Number(year)) ||
+            Number(year) < 1
+        ) {
+            status.textContent = 'Please enter a valid positive year level.';
+            return;
         }
 
-        // Greeting API
-        async function sayHello() {
-            const name = document.getElementById('nameInput').value.trim();
-            const greeting = document.getElementById('greeting');
+        status.textContent = 'Loading students for Year ' + year + '...';
 
-            greeting.classList.remove('hidden');
-            greeting.textContent = 'Loading greeting...';
+        try {
+            const response = await fetch(
+                '/students/year/' + encodeURIComponent(year)
+            );
 
-            try {
-                const response = await fetch(
-                    '/hello?name=' + encodeURIComponent(name || 'Student')
-                );
+            if (!response.ok) throw new Error('HTTP ' + response.status);
 
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
+            const data = await response.json();
 
-                const data = await response.json();
-                greeting.textContent = data.message;
-            } catch (error) {
-                greeting.textContent = 'Unable to retrieve greeting.';
-                console.error(error);
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid student data received.');
             }
+
+            if (data.length === 0) {
+                status.textContent =
+                    'No students found for Year ' + year + '.';
+                return;
+            }
+
+            data.forEach(student => {
+                const item = document.createElement('div');
+                item.className = 'database-item';
+
+                const title = document.createElement('b');
+                title.textContent =
+                    'Student ID: ' + (student.student_id ?? 'N/A');
+
+                const details = document.createElement('p');
+                details.textContent =
+                    'Name: ' + (student.name ?? 'N/A') +
+                    ' | Program: ' + (student.program ?? 'N/A') +
+                    ' | Year: ' + (student.year ?? 'N/A') +
+                    ' | Section: ' + (student.section ?? 'N/A');
+
+                item.appendChild(title);
+                item.appendChild(document.createElement('br'));
+                item.appendChild(details);
+                studentList.appendChild(item);
+            });
+
+            status.textContent =
+                'Successfully loaded ' + data.length +
+                ' student(s) for Year ' + year + '.';
+
+        } catch (error) {
+            status.textContent =
+                'Unable to retrieve students by year level. ' +
+                'Check your Flask server and database.';
+            console.error('Year-level API error:', error);
         }
+    }
 
-        document.getElementById('nameInput').addEventListener(
-            'keydown',
-            event => {
-                if (event.key === 'Enter') {
-                    sayHello();
-                }
-            }
-        );
-
-        // Motorcycle API
-        async function loadMotorcycle() {
-            const result = document.getElementById('motorcycleResult');
-            const status = document.getElementById('motorcycleStatus');
-
-            status.textContent = 'Loading motorcycle information...';
-            result.replaceChildren();
-
-            try {
-                const response = await fetch('/motorcycle');
-
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-
-                const data = await response.json();
-
-                const fields = [
-                    ['Motorcycle Name', data.motorcycle_name],
-                    ['Brand', data.brand],
-                    ['Engine CC', data.engine_cc],
-                    [
-                        'Price',
-                        data.price == null
-                            ? ''
-                            : '₱' + Number(data.price).toLocaleString('en-PH')
-                    ],
-                    ['Available', data.available ? 'Yes' : 'No']
-                ];
-
-                fields.forEach(([label, value]) => {
-                    const item = document.createElement('div');
-                    item.className = 'motorcycle-item';
-
-                    const bold = document.createElement('b');
-                    bold.textContent = label + ': ';
-
-                    item.appendChild(bold);
-                    item.appendChild(
-                        document.createTextNode(
-                            value == null ? '' : String(value)
-                        )
-                    );
-
-                    result.appendChild(item);
-                });
-
-                status.textContent =
-                    'Motorcycle information loaded successfully.';
-            } catch (error) {
-                status.textContent =
-                    'Unable to retrieve motorcycle information.';
-                console.error(error);
-            }
-        }
-
-        // Students from SQLite Database
-        async function loadStudents() {
-            const studentList = document.getElementById('studentList');
-            const status = document.getElementById('databaseStatus');
-
-            status.textContent = 'Loading student records...';
-            studentList.replaceChildren();
-
-            try {
-                const response = await fetch('/students');
-
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-
-                const data = await response.json();
-
-                if (!Array.isArray(data)) {
-                    throw new Error('Invalid student data received.');
-                }
-
-                if (data.length === 0) {
-                    status.textContent = 'No student records found.';
-                    return;
-                }
-
-                data.forEach(student => {
-                    const item = document.createElement('div');
-                    item.className = 'database-item';
-
-                    const title = document.createElement('b');
-                    title.textContent =
-                        student.student_id || 'No student ID';
-
-                    const details = document.createElement('p');
-                    details.textContent =
-                        (student.name || 'Unknown name') + ' | ' +
-                        (student.program || 'N/A') + ' | Year ' +
-                        (student.year ?? 'N/A') + ' | Section ' +
-                        (student.section || 'N/A');
-
-                    item.appendChild(title);
-                    item.appendChild(document.createElement('br'));
-                    item.appendChild(details);
-
-                    studentList.appendChild(item);
-                });
-
-                status.textContent =
-                    'Successfully loaded ' + data.length +
-                    ' student record(s).';
-            } catch (error) {
-                status.textContent =
-                    'Unable to retrieve student records.';
-                console.error('Database API error:', error);
-            }
-        }
-    </script>
+    // Search by pressing Enter
+    document.getElementById('yearInput').addEventListener('keydown', event => {
+        if (event.key === 'Enter') loadStudentsByYear();
+    });
+</script>
 </body>
 </html>
