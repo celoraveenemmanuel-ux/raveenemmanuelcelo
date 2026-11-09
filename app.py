@@ -10,7 +10,7 @@ CORS(app)
 
 DATABASE = Path(__file__).resolve().parent / "students.db"
 
-# Clark's deployed Student API
+# CLARK'S DEPLOYED STUDENT API
 CLASSMATE_API = "https://labrador-clark.onrender.com/api/students"
 
 
@@ -25,37 +25,42 @@ def get_db_connection():
 def initialize_database():
     conn = get_db_connection()
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            program TEXT NOT NULL,
-            year INTEGER NOT NULL,
-            section TEXT NOT NULL,
-            source TEXT DEFAULT 'Local'
-        )
-    """)
-
-    columns = [
-        row["name"]
-        for row in conn.execute("PRAGMA table_info(students)").fetchall()
-    ]
-
-    if "source" not in columns:
+    try:
         conn.execute("""
-            ALTER TABLE students
-            ADD COLUMN source TEXT DEFAULT 'Local'
+            CREATE TABLE IF NOT EXISTS students (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+                program TEXT NOT NULL,
+                year INTEGER NOT NULL,
+                section TEXT NOT NULL,
+                source TEXT DEFAULT 'Local'
+            )
         """)
 
-    conn.execute("""
-        UPDATE students
-        SET source = 'Local'
-        WHERE source IS NULL OR TRIM(source) = ''
-    """)
+        columns = {
+            column["name"]
+            for column in conn.execute(
+                "PRAGMA table_info(students)"
+            ).fetchall()
+        }
 
-    conn.commit()
-    conn.close()
+        if "source" not in columns:
+            conn.execute("""
+                ALTER TABLE students
+                ADD COLUMN source TEXT DEFAULT 'Local'
+            """)
+
+        conn.execute("""
+            UPDATE students
+            SET source = 'Local'
+            WHERE source IS NULL OR TRIM(source) = ''
+        """)
+
+        conn.commit()
+
+    finally:
+        conn.close()
 
 
 initialize_database()
@@ -63,24 +68,58 @@ initialize_database()
 
 # VALIDATE STUDENT DATA
 def validate_student_data(data):
+
     if not isinstance(data, dict):
         return "Invalid JSON data."
 
-    fields = ["student_id", "name", "program", "year", "section"]
+    required_fields = [
+        "student_id",
+        "name",
+        "program",
+        "year",
+        "section"
+    ]
 
-    for field in fields:
+    for field in required_fields:
         if field not in data or str(data[field]).strip() == "":
             return f"{field} is required."
 
     try:
         year = int(data["year"])
-    except (ValueError, TypeError):
-        return "Year must be a valid number."
 
-    if year < 1 or year > 4:
-        return "Year must be between 1 and 4."
+        if year < 1 or year > 4:
+            return "Year must be between 1 and 4."
+
+    except (ValueError, TypeError):
+        return "Invalid year."
 
     return None
+
+
+# INSERT STUDENT
+def insert_student(data, source):
+
+    conn = get_db_connection()
+
+    try:
+        cursor = conn.execute("""
+            INSERT INTO students
+            (student_id, name, program, year, section, source)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            str(data["student_id"]).strip(),
+            str(data["name"]).strip(),
+            str(data["program"]).strip(),
+            int(data["year"]),
+            str(data["section"]).strip(),
+            source
+        ))
+
+        conn.commit()
+        return cursor.lastrowid
+
+    finally:
+        conn.close()
 
 
 # HOME PAGE
@@ -92,37 +131,35 @@ def home():
 # STUDENT INFORMATION API
 @app.route("/student", methods=["GET"])
 def get_student():
+
     return jsonify({
-        "student_id": "2026-001",
-        "name": "Raveen",
+        "student_id": "24-00063",
+        "name": "Raveen Emmanuel Celo",
         "program": "BSIT",
-        "year": 2,
+        "year": 3,
         "section": "A"
     })
 
 
 # GREETING API
 @app.route("/hello", methods=["GET"])
-def hello():
-    name = request.args.get("name", "").strip()
+def say_hello():
 
-    if name:
-        return jsonify({
-            "message": f"Hello, {name}! Welcome to Raveen's API."
-        })
+    name = request.args.get("name", "Student")
 
     return jsonify({
-        "message": "Hello! Welcome to Raveen's Student API."
+        "message": f"Hello, {name}!"
     })
 
 
 # MOTORCYCLE API
 @app.route("/motorcycle", methods=["GET"])
-def motorcycle():
+def get_motorcycle():
+
     return jsonify({
-        "brand": "Honda",
-        "model": "Click 125",
-        "type": "Scooter"
+        "brand": "Yamaha",
+        "model": "Motorcycle",
+        "type": "Sample API"
     })
 
 
@@ -130,120 +167,134 @@ def motorcycle():
 @app.route("/students", methods=["GET"])
 @app.route("/api/students", methods=["GET"])
 def get_students():
-    conn = get_db_connection()
-
-    students = conn.execute(
-        "SELECT * FROM students ORDER BY id DESC"
-    ).fetchall()
-
-    conn.close()
-
-    return jsonify([dict(student) for student in students])
-
-
-# GET ONE STUDENT
-@app.route("/students/<int:id>", methods=["GET"])
-@app.route("/api/students/<int:id>", methods=["GET"])
-def get_one_student(id):
-    conn = get_db_connection()
-
-    student = conn.execute(
-        "SELECT * FROM students WHERE id = ?",
-        (id,)
-    ).fetchone()
-
-    conn.close()
-
-    if student is None:
-        return jsonify({"error": "Student not found."}), 404
-
-    return jsonify(dict(student))
-
-
-# SEARCH STUDENTS BY YEAR
-@app.route("/students/year/<int:year>", methods=["GET"])
-def get_students_by_year(year):
-    if year < 1 or year > 4:
-        return jsonify({"error": "Invalid year level."}), 400
-
-    conn = get_db_connection()
-
-    students = conn.execute(
-        "SELECT * FROM students WHERE year = ? ORDER BY id DESC",
-        (year,)
-    ).fetchall()
-
-    conn.close()
-
-    return jsonify([dict(student) for student in students])
-
-
-# ADD STUDENT / RECEIVE EXTERNAL STUDENT
-@app.route("/api/students", methods=["POST"])
-def add_student():
-    data = request.get_json(silent=True)
-    error = validate_student_data(data)
-
-    if error:
-        return jsonify({"error": error}), 400
-
-    source = str(data.get("source") or "External API").strip()
-
-    if not source:
-        source = "External API"
-
-    student_id = data["student_id"].strip()
 
     conn = get_db_connection()
 
     try:
-        existing = conn.execute(
-            "SELECT id FROM students WHERE student_id = ?",
-            (student_id,)
-        ).fetchone()
+        students = conn.execute(
+            "SELECT * FROM students ORDER BY id DESC"
+        ).fetchall()
 
-        if existing:
-            return jsonify({
-                "error": "Student ID already exists in your database.",
-                "student_id": student_id
-            }), 409
-
-        cursor = conn.execute("""
-            INSERT INTO students
-            (student_id, name, program, year, section, source)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            student_id,
-            data["name"].strip(),
-            data["program"].strip(),
-            int(data["year"]),
-            data["section"].strip(),
-            source
-        ))
-
-        conn.commit()
-
-        return jsonify({
-            "message": "Student record successfully received and saved!",
-            "id": cursor.lastrowid,
-            "student_id": student_id,
-            "source": source
-        }), 201
+        return jsonify([
+            dict(student) for student in students
+        ])
 
     except sqlite3.Error as error:
-        return jsonify({
-            "error": "Database error.",
-            "details": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         conn.close()
 
 
+# GET ONE STUDENT
+@app.route("/students/<int:id>", methods=["GET"])
+@app.route("/api/students/<int:id>", methods=["GET"])
+def get_student_by_id(id):
+
+    conn = get_db_connection()
+
+    try:
+        student = conn.execute(
+            "SELECT * FROM students WHERE id = ?",
+            (id,)
+        ).fetchone()
+
+        if student is None:
+            return jsonify({
+                "error": "Student not found."
+            }), 404
+
+        return jsonify(dict(student))
+
+    except sqlite3.Error as error:
+        return jsonify({"error": str(error)}), 500
+
+    finally:
+        conn.close()
+
+
+# GET STUDENTS BY YEAR
+@app.route("/students/year/<int:year>", methods=["GET"])
+def get_students_by_year(year):
+
+    if year < 1 or year > 4:
+        return jsonify({
+            "error": "Year must be between 1 and 4."
+        }), 400
+
+    conn = get_db_connection()
+
+    try:
+        students = conn.execute(
+            "SELECT * FROM students WHERE year = ? ORDER BY id DESC",
+            (year,)
+        ).fetchall()
+
+        return jsonify([
+            dict(student) for student in students
+        ])
+
+    except sqlite3.Error as error:
+        return jsonify({"error": str(error)}), 500
+
+    finally:
+        conn.close()
+
+
+# ADD STUDENT
+@app.route("/api/students", methods=["POST"])
+def add_student():
+
+    data = request.get_json(silent=True)
+
+    error = validate_student_data(data)
+
+    if error:
+        return jsonify({"error": error}), 400
+
+    source = str(
+        data.get("source", "External API")
+    ).strip()
+
+    allowed_sources = [
+        "Local",
+        "Imported",
+        "External API",
+        "Partner API",
+        "Classmate API"
+    ]
+
+    if source not in allowed_sources:
+        return jsonify({
+            "error": "Invalid student source.",
+            "received_source": source,
+            "allowed_sources": allowed_sources
+        }), 400
+
+    try:
+        new_id = insert_student(data, source)
+
+        return jsonify({
+            "message": "Student added successfully!",
+            "id": new_id,
+            "source": source
+        }), 201
+
+    except sqlite3.IntegrityError:
+        return jsonify({
+            "error": "Student ID already exists."
+        }), 409
+
+    except sqlite3.Error as error:
+        return jsonify({"error": str(error)}), 500
+
+
 # UPDATE STUDENT
 @app.route("/api/students/<int:id>", methods=["PUT"])
 def update_student(id):
+
     data = request.get_json(silent=True)
+
     error = validate_student_data(data)
 
     if error:
@@ -253,22 +304,14 @@ def update_student(id):
 
     try:
         existing = conn.execute(
-            "SELECT * FROM students WHERE id = ?",
+            "SELECT id FROM students WHERE id = ?",
             (id,)
         ).fetchone()
 
         if existing is None:
-            return jsonify({"error": "Student not found."}), 404
-
-        duplicate = conn.execute("""
-            SELECT id FROM students
-            WHERE student_id = ? AND id != ?
-        """, (data["student_id"].strip(), id)).fetchone()
-
-        if duplicate:
             return jsonify({
-                "error": "Student ID already belongs to another record."
-            }), 409
+                "error": "Student not found."
+            }), 404
 
         conn.execute("""
             UPDATE students
@@ -279,11 +322,11 @@ def update_student(id):
                 section = ?
             WHERE id = ?
         """, (
-            data["student_id"].strip(),
-            data["name"].strip(),
-            data["program"].strip(),
+            str(data["student_id"]).strip(),
+            str(data["name"]).strip(),
+            str(data["program"]).strip(),
             int(data["year"]),
-            data["section"].strip(),
+            str(data["section"]).strip(),
             id
         ))
 
@@ -293,11 +336,13 @@ def update_student(id):
             "message": "Student updated successfully!"
         })
 
-    except sqlite3.Error as error:
+    except sqlite3.IntegrityError:
         return jsonify({
-            "error": "Database error.",
-            "details": str(error)
-        }), 500
+            "error": "Student ID already exists."
+        }), 409
+
+    except sqlite3.Error as error:
+        return jsonify({"error": str(error)}), 500
 
     finally:
         conn.close()
@@ -306,21 +351,19 @@ def update_student(id):
 # DELETE STUDENT
 @app.route("/api/students/<int:id>", methods=["DELETE"])
 def delete_student(id):
+
     conn = get_db_connection()
 
     try:
-        existing = conn.execute(
-            "SELECT id FROM students WHERE id = ?",
-            (id,)
-        ).fetchone()
-
-        if existing is None:
-            return jsonify({"error": "Student not found."}), 404
-
-        conn.execute(
+        cursor = conn.execute(
             "DELETE FROM students WHERE id = ?",
             (id,)
         )
+
+        if cursor.rowcount == 0:
+            return jsonify({
+                "error": "Student not found."
+            }), 404
 
         conn.commit()
 
@@ -329,18 +372,16 @@ def delete_student(id):
         })
 
     except sqlite3.Error as error:
-        return jsonify({
-            "error": "Database error.",
-            "details": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         conn.close()
 
 
-# RETRIEVE CLARK'S RECORDS
+# RETRIEVE CLARK'S STUDENT RECORDS
 @app.route("/classmate-records", methods=["GET"])
-def get_classmate_students():
+def get_classmate_records():
+
     try:
         response = requests.get(
             CLASSMATE_API,
@@ -350,16 +391,9 @@ def get_classmate_students():
         response.raise_for_status()
         records = response.json()
 
-        if isinstance(records, dict):
-            records = records.get(
-                "students",
-                records.get("data", records)
-            )
-
         if not isinstance(records, list):
             return jsonify({
-                "error": "Clark's API did not return a list of students.",
-                "partner_response": records
+                "error": "Clark's API did not return a student list."
             }), 502
 
         return jsonify(records)
@@ -381,87 +415,101 @@ def get_classmate_students():
         }), 502
 
 
-# IMPORT CLARK'S SELECTED RECORD
+# IMPORT SELECTED STUDENT FROM CLARK
 @app.route("/import-student", methods=["POST"])
 def import_student():
-    data = request.get_json(silent=True)
-    error = validate_student_data(data)
 
-    if error:
-        return jsonify({"error": error}), 400
+    data = request.get_json(silent=True) or {}
+    selected_id = data.get("id")
 
-    student_id = data["student_id"].strip()
-    conn = get_db_connection()
+    if selected_id is None:
+        return jsonify({
+            "error": "Student ID is required."
+        }), 400
 
     try:
-        existing = conn.execute(
-            "SELECT id FROM students WHERE student_id = ?",
-            (student_id,)
-        ).fetchone()
+        response = requests.get(
+            CLASSMATE_API,
+            timeout=30
+        )
 
-        if existing:
+        response.raise_for_status()
+        records = response.json()
+
+        if not isinstance(records, list):
             return jsonify({
-                "error": "This student record already exists.",
-                "student_id": student_id
-            }), 409
+                "error": "Invalid student list from Clark."
+            }), 502
 
-        cursor = conn.execute("""
-            INSERT INTO students
-            (student_id, name, program, year, section, source)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            student_id,
-            data["name"].strip(),
-            data["program"].strip(),
-            int(data["year"]),
-            data["section"].strip(),
+        selected_student = next(
+            (
+                student for student in records
+                if str(student.get("id")) == str(selected_id)
+                or str(student.get("student_id")) == str(selected_id)
+            ),
+            None
+        )
+
+        if selected_student is None:
+            return jsonify({
+                "error": "Selected student not found."
+            }), 404
+
+        error = validate_student_data(selected_student)
+
+        if error:
+            return jsonify({"error": error}), 400
+
+        new_id = insert_student(
+            selected_student,
             "Classmate API"
-        ))
-
-        conn.commit()
+        )
 
         return jsonify({
-            "message": "Clark's student record imported successfully!",
-            "id": cursor.lastrowid,
-            "student_id": student_id,
+            "message": "Student imported successfully!",
+            "id": new_id,
             "source": "Classmate API"
         }), 201
 
-    except sqlite3.Error as error:
+    except sqlite3.IntegrityError:
         return jsonify({
-            "error": "Database error.",
+            "error": "Student ID already exists in your database."
+        }), 409
+
+    except requests.exceptions.RequestException as error:
+        return jsonify({
+            "error": "Unable to retrieve Clark's records.",
             "details": str(error)
-        }), 500
+        }), 502
 
-    finally:
-        conn.close()
+    except sqlite3.Error as error:
+        return jsonify({"error": str(error)}), 500
 
 
-# SEND A PRACTICE RECORD TO CLARK
-# MATCHED WITH CLARK'S SEND-TO-PARTNER LOGIC
+# SEND PRACTICE RECORD TO CLARK
+# ONE BUTTON - NO INPUT REQUIRED
 @app.route("/send-to-partner", methods=["POST"])
 def send_to_partner():
-    record = request.get_json(silent=True)
+
+    record = {
+        "student_id": "EXT-RAVEEN-001",
+        "name": "Raveen Sample Exchange Record",
+        "program": "BSIT",
+        "year": 1,
+        "section": "A",
+        "source": "Partner API"
+    }
 
     error = validate_student_data(record)
 
     if error:
         return jsonify({"error": error}), 400
 
-    record = {
-        "student_id": record["student_id"].strip(),
-        "name": record["name"].strip(),
-        "program": record["program"].strip(),
-        "year": int(record["year"]),
-        "section": record["section"].strip(),
-        "source": record.get("source", "Partner API")
-    }
-
     try:
         response = requests.post(
             CLASSMATE_API,
             json=record,
-            timeout=15
+            timeout=20
         )
 
         try:
@@ -472,7 +520,8 @@ def send_to_partner():
         return jsonify({
             "message": (
                 "Partner accepted the record."
-                if response.ok else "Partner rejected the record."
+                if response.ok
+                else "Partner rejected the record."
             ),
             "status_code": response.status_code,
             "partner_response": partner_result,
@@ -481,19 +530,20 @@ def send_to_partner():
 
     except requests.exceptions.Timeout:
         return jsonify({
-            "error": "Partner API request timed out."
+            "error": "Clark's API request timed out."
         }), 504
 
     except requests.exceptions.RequestException as error:
         return jsonify({
-            "error": "Unable to send record to partner.",
+            "error": "Unable to send record to Clark.",
             "details": str(error)
         }), 502
 
 
-# API 404 HANDLER
+# 404 ERROR HANDLER
 @app.errorhandler(404)
-def not_found(error):
+def page_not_found(error):
+
     if request.path.startswith("/api/"):
         return jsonify({
             "error": "API endpoint not found."
