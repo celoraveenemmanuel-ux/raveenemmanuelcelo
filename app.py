@@ -10,7 +10,7 @@ CORS(app)
 DATABASE = Path(__file__).resolve().parent / "students.db"
 
 # Clark's deployed Student API
-CLASSMATE_API = "https://labrador-clark.onrender.com/api/students"
+CLASSMATE_API = "http://13.238.16.159/api/students"
 
 
 # DATABASE CONNECTION
