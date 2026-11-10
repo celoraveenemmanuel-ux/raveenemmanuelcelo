@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +15,7 @@ body {
     margin: 0;
     padding: 30px 15px;
     font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #dceeff, #e8f5e9);
+    background: linear-gradient(135deg, #ffe0e0, #fff5f5);
     color: #263238;
 }
 
@@ -24,7 +25,7 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, #087f5b, #1976d2);
+    background: linear-gradient(135deg, #b71c1c, #e53935);
     color: white;
     padding: 30px;
     border-radius: 16px;
@@ -41,40 +42,48 @@ header h1 {
     padding: 25px;
     border-radius: 15px;
     margin-bottom: 22px;
-    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+    box-shadow: 0 5px 18px rgba(183, 28, 28, 0.10);
 }
 
 h2 {
-    color: #087f5b;
+    color: #c62828;
     margin-top: 0;
 }
 
 h3 {
-    color: #1976d2;
+    color: #e53935;
 }
 
 input, select {
     width: 100%;
     padding: 12px;
     margin: 7px 0 15px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #efb3b3;
     border-radius: 8px;
     font-size: 15px;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #e53935;
+    box-shadow: 0 0 5px rgba(229, 57, 53, 0.25);
 }
 
 button {
     border: none;
     padding: 11px 17px;
     border-radius: 8px;
-    background: #087f5b;
+    background: #c62828;
     color: white;
     font-weight: bold;
     cursor: pointer;
     margin: 4px;
+    transition: 0.2s;
 }
 
 button:hover {
-    opacity: 0.85;
+    background: #8e0000;
+    transform: translateY(-1px);
 }
 
 button:disabled {
@@ -83,19 +92,35 @@ button:disabled {
 }
 
 .blue {
-    background: #1976d2;
+    background: #e53935;
+}
+
+.blue:hover {
+    background: #b71c1c;
 }
 
 .red {
-    background: #d32f2f;
+    background: #990000;
+}
+
+.red:hover {
+    background: #660000;
 }
 
 .orange {
-    background: #ed8b00;
+    background: #ef6c00;
+}
+
+.orange:hover {
+    background: #e65100;
 }
 
 .purple {
-    background: #7048e8;
+    background: #ad1457;
+}
+
+.purple:hover {
+    background: #880e4f;
 }
 
 table {
@@ -106,14 +131,14 @@ table {
 }
 
 th, td {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #f3d0d0;
     padding: 12px;
     text-align: left;
 }
 
 th {
-    background: #e8f5e9;
-    color: #087f5b;
+    background: #ffebee;
+    color: #b71c1c;
 }
 
 .table-wrapper {
@@ -128,27 +153,29 @@ th {
 }
 
 .success {
-    background: #e8f5e9;
-    color: #176b36;
+    background: #ffebee;
+    color: #880e0e;
+    border-left: 4px solid #c62828;
 }
 
 .error {
-    background: #ffebee;
+    background: #ffcdd2;
     color: #b71c1c;
+    border-left: 4px solid #b71c1c;
 }
 
 pre {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    background: #f1f5f9;
+    background: #fff1f1;
     padding: 15px;
     border-radius: 8px;
 }
 
 .badge {
     display: inline-block;
-    background: #e3f2fd;
-    color: #1565c0;
+    background: #ffebee;
+    color: #b71c1c;
     padding: 5px 9px;
     border-radius: 15px;
     font-size: 12px;
@@ -165,16 +192,16 @@ pre {
 .stat-box {
     padding: 20px;
     border-radius: 12px;
-    background: #e8f5e9;
+    background: #ffebee;
     text-align: center;
 }
 
 .stat-box:nth-child(2) {
-    background: #e3f2fd;
+    background: #ffcdd2;
 }
 
 .stat-box:nth-child(3) {
-    background: #f3e8ff;
+    background: #fce4ec;
 }
 
 .stat-box h3 {
@@ -185,13 +212,13 @@ pre {
 .stat-number {
     font-size: 30px;
     font-weight: bold;
-    color: #087f5b;
+    color: #b71c1c;
 }
 
 .dashboard-section {
     margin-top: 25px;
     padding: 18px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #f3d0d0;
     border-radius: 12px;
 }
 
@@ -234,7 +261,6 @@ pre {
     <h1>Raveen's Student API Interface</h1>
     <p>Student Management and Two-Way API Integration</p>
 </header>
-
 
 <!-- STUDENT INFORMATION -->
 <section class="card">
@@ -282,7 +308,6 @@ pre {
 
 </section>
 
-
 <!-- INTEGRATION DASHBOARD -->
 <section class="card">
 
@@ -320,7 +345,6 @@ pre {
 
     </div>
 
-
     <!-- LOCAL RECORDS -->
     <div class="dashboard-section">
 
@@ -352,7 +376,6 @@ pre {
         </div>
 
     </div>
-
 
     <!-- IMPORTED RECORDS -->
     <div class="dashboard-section">
@@ -386,7 +409,6 @@ pre {
         </div>
 
     </div>
-
 
     <!-- PARTNER RECORDS -->
     <div class="dashboard-section">
@@ -428,7 +450,6 @@ pre {
 
 </section>
 
-
 <!-- MY STUDENT RECORDS -->
 <section class="card">
 
@@ -461,7 +482,6 @@ pre {
 
 </section>
 
-
 <!-- SEARCH BY YEAR -->
 <section class="card">
 
@@ -480,7 +500,6 @@ pre {
     <div id="yearResult"></div>
 
 </section>
-
 
 <!-- CLARK'S STUDENT RECORDS -->
 <section class="card">
@@ -521,7 +540,6 @@ pre {
 
 </section>
 
-
 <!-- SEND PRACTICE RECORD -->
 <section class="card">
 
@@ -541,7 +559,6 @@ pre {
 </section>
 
 </div>
-
 
 <script>
 
